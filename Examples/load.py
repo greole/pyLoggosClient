@@ -3,7 +3,10 @@ import sys
 
 log = log.Loggos(
      public = '',
-     secret = ''
+     secret = '',
+     client = 'loadavg',
+     client_type = "scheduled",
+     fields = '1m, 5m, 15m, nprocs, nsched, pid'
      )
 
 with open("/proc/loadavg", "r") as load:
