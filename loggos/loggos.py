@@ -2,13 +2,14 @@ import hmac
 import requests
 import hashlib
 import time
-import os
+import os, sys
 # from urllib import urlencode
 from requests.auth import HTTPBasicAuth
 import json
 from copy import deepcopy
 from io import StringIO
 from subprocess import Popen, PIPE
+import socket
 
 try:
     from Crypto.Hash import HMAC as hmac
@@ -64,7 +65,8 @@ class Loggos():
         private = self.call(
                     method="register", msg={
                         "apikey":self.apikey,
-                        "path": "/foo/bar",
+                        "hostname":socket.gethostname(),
+                        "path": os.path.abspath(sys.argv[0]),
                         "fields": self.config.get("fields", []),
                         "tags": self.config.get("tags", [])},
                     apikey=master_apikey, secret=master_secret)
