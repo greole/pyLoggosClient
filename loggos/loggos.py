@@ -43,6 +43,14 @@ class Loggos():
         return sha256.new(s.encode()).hexdigest()
 
     @property
+    def metadata(self):
+        return {
+                  "hostname":socket.gethostname(),
+                  "path": os.path.abspath(sys.argv[0]),
+                  "fields": self.config.get("fields", []),
+                  "tags": self.config.get("tags", [])}
+
+    @property
     def secret(self):
 
         with open(self.client_file, "r") as f:
@@ -62,13 +70,10 @@ class Loggos():
         return str(int(time.time() * 1000))
 
     def register_client(self, master_apikey, master_secret, apikey):
+        msg = {"apikey":self.apikey}
+        msg.update(self.metadata)
         private = self.call(
-                    method="register", msg={
-                        "apikey":self.apikey,
-                        "hostname":socket.gethostname(),
-                        "path": os.path.abspath(sys.argv[0]),
-                        "fields": self.config.get("fields", []),
-                        "tags": self.config.get("tags", [])},
+                    method="register", msg=msg,
                     apikey=master_apikey, secret=master_secret)
         with open(self.client_file, "a+") as f:
             f.write(private)
