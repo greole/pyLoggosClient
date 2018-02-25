@@ -23,11 +23,16 @@ class Loggos():
 
     base_url = "https://log.0xf4.de/api/v0.2/"
 
-    def __init__(self, public, secret, **kwargs):
+    def __init__(
+            self, public, secret,
+            enabled=True, print_to_stdout=False,
+            **kwargs):
         self.master_public = public
         self.master_secret = secret
         self.version = 0.11
         self.config = kwargs
+        self.enabled = enabled
+        self.print = print_to_stdout
 
         if not self.registered:
             self.register_client(
@@ -37,9 +42,10 @@ class Loggos():
 
     @property
     def apikey(self):
-        config = deepcopy(self.config)
-        config["fields"] = ",".join(config["fields"])
-        s = "".join(config.values())
+        s = "{}{}{}{}{hostname}{path}".format(
+             self.master_public, self.master_secret,
+             self.config["client"], self.config["client_type"],
+             **self.metadata,)
         return sha256.new(s.encode()).hexdigest()
 
     @property
@@ -62,7 +68,7 @@ class Loggos():
 
     @property
     def registered(self):
-        f = os.path.expanduser("~/.loggos/" + self.apikey)
+        f = self.client_file
         return os.path.exists(f)
 
     @property
@@ -70,15 +76,23 @@ class Loggos():
         return str(int(time.time() * 1000))
 
     def register_client(self, master_apikey, master_secret, apikey):
-        msg = {"apikey":self.apikey}
+        if not self.enabled:
+            return
+        print("registering new client {} ".format(apikey))
+        msg = {"apikey": self.apikey}
         msg.update(self.metadata)
         private = self.call(
                     method="register", msg=msg,
                     apikey=master_apikey, secret=master_secret)
+        print("done")
         with open(self.client_file, "a+") as f:
             f.write(private)
 
     def call(self, method, msg, apikey=None, secret=None):
+        if self.print:
+            print(msg)
+        if not self.enabled:
+            return
         if not apikey:
             apikey = self.apikey
         if not secret:
